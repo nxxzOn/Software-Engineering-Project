@@ -22,4 +22,4 @@ The repository includes:
 - package-lock.json
 
 ## Project Link
-[GitHub Repository Link](https://github.com/nxxzOn/Phase-3)
+[GitHub Repository Link](https://github.com/nxxzOn/Software-Engineering-Project)
