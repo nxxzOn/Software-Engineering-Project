@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Train Booking | Executive Portal</title>
+    <title>Train Booking | Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -21,7 +21,6 @@
         .theme-toggle { position: fixed; top: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 20px; box-shadow: 0 4px 6px var(--shadow-color); z-index: 1000; }
         .card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px; width: 100%; max-width: 1000px; box-shadow: 0 25px 50px -12px var(--shadow-color); margin-top: 40px; margin-bottom: 40px; }
         
-        .logo-container { display: flex; align-items: center; margin-bottom: 5px; justify-content: space-between; }
         .logo-text { font-size: 28px; font-weight: 800; color: var(--text-main); }
         .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
 
@@ -34,13 +33,13 @@
         input, select { width: 100%; padding: 12px 16px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-input); color: var(--text-main); transition: 0.2s; font-family: 'Inter'; }
         input:focus, select:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
-        button.primary-btn { width: 100%; padding: 14px; background-color: #111827; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button.primary-btn { width: 100%; padding: 14px; background-color: #111827; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
         [data-theme="dark"] button.primary-btn { background-color: var(--primary-blue); }
 
         .toggle-link { color: var(--primary-blue); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.2s; }
         .toggle-link:hover { text-decoration: underline; }
 
-        #login-section { max-width: 440px; margin: auto; }
+        #login-section { max-width: 500px; margin: auto; }
         #main-app { display: none; width: 100%; padding: 30px; }
         .admin-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
         
@@ -88,7 +87,7 @@
         .modal-content { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px 30px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; }
         .modal-title { font-size: 22px; font-weight: 800; margin-bottom: 15px; color: var(--text-main); }
         
-        #schedules-section, #booking-section, #staff-section, #reports-section { display: none; }
+        #schedules-section, #booking-section, #staff-section, #reports-section, #passengers-section { display: none; }
         #admin-tickets-section { display: none; margin-top: 40px; padding-top: 25px; border-top: 1px solid var(--border-color); }
         
         .form-row { display: flex; gap: 15px; }
@@ -99,21 +98,64 @@
 
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn"></button>
 
+    <div class="modal-overlay" id="firstLoginModal">
+        <div class="modal-content" style="text-align: left;">
+            <div class="modal-title" style="color: var(--primary-blue); text-align: left;">Setup New Password</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Please set a secure password for your account to proceed.</p>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newStaffPassword" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmStaffPassword" required>
+            </div>
+            <button onclick="submitNewStaffPassword()" class="primary-btn" style="width: 100%; margin-top: 10px;">Save Password</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="smartModal">
         <div class="modal-content">
             <div id="smartModalIcon" style="font-size: 55px; margin-bottom: 15px;"></div>
             <div class="modal-title" id="smartModalTitle"></div>
             <p id="smartModalMessage" style="color: var(--text-muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 30px;"></p>
-            <div id="smartModalActions" style="display: flex; gap: 10px; justify-content: center;">
+            <div id="smartModalActions" style="display: flex; gap: 10px; justify-content: center;"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-content" style="text-align: left; padding: 30px;">
+            <div class="modal-title" style="text-align: left; font-size: 20px;">Confirm Payment</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Upload a copy of your transfer receipt to activate your ticket.</p>
+            <input type="hidden" id="confirmTicketId">
+            <div class="form-group">
+                <input type="file" id="receiptFile" accept="image/png,image/jpeg,image/webp" required style="padding: 10px; background: var(--bg-main);">
+            </div>
+            <div class="form-row" style="margin-top: 20px;">
+                <button onclick="submitPaymentConfirmation()" class="primary-btn" style="flex:2;">Upload & Confirm</button>
+                <button onclick="closeUploadModal()" class="primary-btn" style="flex:1; background-color:var(--border-color); color:var(--text-main);">Cancel</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="editModal">
-        <div class="modal-content" style="text-align: left; padding: 30px;">
+        <div class="modal-content" style="text-align: left; padding: 30px; max-width: 480px;">
             <div class="modal-title" style="text-align: left; font-size: 20px;">Edit Route: <span id="editTrainIdDisplay" style="color:var(--primary-blue);"></span></div>
             <input type="hidden" id="editTrainId">
-            <div class="form-group"><label>Ticket Price (SAR)</label><input type="number" id="editPrice" step="0.01"></div>
+            <input type="hidden" id="editCurrentBooked">
+
+            <div class="form-row">
+                <div class="form-group"><label>Departure Date</label><input type="date" id="editDate"></div>
+                <div class="form-group"><label>Departure Time</label><input type="time" id="editTime"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Ticket Price (SAR)</label><input type="number" id="editPrice" step="0.01"></div>
+                <div class="form-group">
+                    <label>Total Capacity</label>
+                    <input type="number" id="editCapacity" min="1" step="1">
+                    <span id="editCapacityHint" style="font-size:11px; color:var(--text-muted); margin-top:4px; display:block;"></span>
+                </div>
+            </div>
             <div class="form-group">
                 <label>Route Status</label>
                 <select id="editStatus">
@@ -123,18 +165,24 @@
                 </select>
             </div>
             <div class="form-row" style="margin-top: 30px;">
-                <button onclick="saveTrainEdit()" class="primary-btn" style="flex:2;">Save</button>
+                <button onclick="saveTrainEdit()" class="primary-btn" style="flex:2;">Save Changes</button>
                 <button onclick="closeEditModal()" class="primary-btn" style="flex:1; background-color:var(--border-color); color:var(--text-main);">Cancel</button>
             </div>
         </div>
     </div>
 
     <div class="card" id="login-section">
-        <div class="logo-text" style="text-align: center; margin-bottom: 10px;">Train Booking</div>
+        <div class="logo-text" style="text-align: center; margin-bottom: 25px;">Train Booking Portal</div>
+        
+        <div class="role-selector" style="margin-bottom: 30px;">
+            <button type="button" id="portal-passenger-btn" class="role-btn active" onclick="setPortal('passenger')" style="font-size: 16px;">👤 Passenger</button>
+            <button type="button" id="portal-staff-btn" class="role-btn" onclick="setPortal('staff_portal')" style="font-size: 16px;">💼 Staff / Admin</button>
+        </div>
+
         <p class="subtitle" id="login-subtitle" style="text-align: center;">Secure System Access</p>
         
         <div id="login-form-area">
-            <div class="role-selector">
+            <div class="role-selector" id="employee-roles" style="display: none;">
                 <button type="button" id="btn-admin" class="role-btn" onclick="setRole('admin')">👔 Admin</button>
                 <button type="button" id="btn-staff" class="role-btn active" onclick="setRole('staff')">👨‍💼 Staff</button>
             </div>
@@ -143,22 +191,30 @@
                 <div class="form-group"><label>Username</label><input type="text" id="username" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="password" required></div>
                 <button type="submit" class="primary-btn">Sign In</button>
-                <div id="staff-auth-links" style="display: flex; justify-content: space-between; margin-top: 15px;">
+                
+                <div id="auth-links" style="display: flex; justify-content: space-between; margin-top: 15px;">
                     <span class="toggle-link" onclick="toggleAuthMode('forgot')">Forgot Password?</span>
-                    <span class="toggle-link" onclick="toggleAuthMode('register')">Create Staff Account</span>
+                    <span class="toggle-link" onclick="toggleAuthMode('register')" id="create-account-text">Create Passenger Account</span>
                 </div>
             </form>
         </div>
 
-        <div id="register-form-area" style="display: none;">
-            <form onsubmit="handleRegister(event)">
-                <div class="form-group"><label>Email Address</label><input type="email" id="reg-email" placeholder="example@company.com" required></div>
-                <div class="form-group"><label>New Username</label><input type="text" id="reg-username" required></div>
-                <div class="form-group"><label>Password</label><input type="password" id="reg-password" required></div>
-                <button type="submit" class="primary-btn">Create Account</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <span class="toggle-link" onclick="toggleAuthMode('login')">Back to Login</span>
+        <div id="register-passenger-area" style="display: none;">
+            <form onsubmit="handlePassengerRegister(event)">
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="reg-pass-name" required></div>
+                    <div class="form-group"><label>National ID / Iqama</label><input type="text" id="reg-pass-id" required></div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Mobile Number</label><input type="tel" id="reg-pass-contact" required></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" id="reg-pass-email" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Username</label><input type="text" id="reg-pass-username" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="reg-pass-password" minlength="6" maxlength="255" required></div>
+                </div>
+                <button type="submit" class="primary-btn">Create Passenger Account</button>
+                <div style="text-align: center; margin-top: 15px;"><span class="toggle-link" onclick="toggleAuthMode('login')">Back to Login</span></div>
             </form>
         </div>
 
@@ -167,9 +223,7 @@
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Enter your registered email address and we will send you a link to reset your password.</p>
                 <div class="form-group"><label>Registered Email</label><input type="email" id="forgot-email" placeholder="example@company.com" required></div>
                 <button type="submit" class="primary-btn">Send Reset Link</button>
-                <div style="text-align: center; margin-top: 20px;">
-                    <span class="toggle-link" onclick="toggleAuthMode('login')">Back to Login</span>
-                </div>
+                <div style="text-align: center; margin-top: 20px;"><span class="toggle-link" onclick="toggleAuthMode('login')">Back to Login</span></div>
             </form>
         </div>
     </div>
@@ -180,18 +234,31 @@
                 <h1 class="logo-text" id="page-title">Schedules</h1>
                 <p class="subtitle" id="page-subtitle" style="margin-bottom:0;">View and manage routes</p>
             </div>
+            <button onclick="document.getElementById('firstLoginModal').style.display='flex'" class="select-btn">Change Password</button>
             <button onclick="logout()" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight:600;">Logout</button>
         </div>
 
         <div class="tabs" id="admin-tabs">
             <div class="tab active" onclick="switchTab('schedules')" id="tab-schedules">🚆 Train Schedules</div>
             <div class="tab" onclick="switchTab('booking')" id="tab-booking">🎫 Ticketing & Bookings</div>
-            <div class="tab" onclick="switchTab('staff')" id="tab-staff">👥 Staff Management</div>
+            <div class="tab" onclick="switchTab('passengers')" id="tab-passengers">👥 Passenger Management</div>
+            <div class="tab" onclick="switchTab('staff')" id="tab-staff">💼 Staff Management</div>
             <div class="tab" onclick="switchTab('reports')" id="tab-reports">📊 Reports & Analytics</div>
         </div>
 
         <div id="schedules-section">
+            <p id="schedule-status" role="status" aria-live="polite"></p>
+            <button type="button" class="select-btn" onclick="loadSchedules()">Refresh schedules</button>
             <div style="overflow-x: auto;">
+               <div id="add-route-box" style="background: var(--bg-input); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color); display: none;">
+                    <h4 style="margin-top:0; margin-bottom:15px; color: var(--text-main);">Add New Train Route</h4>
+                    <div class="form-row" style="display:flex; gap:15px;">
+                        <div class="form-group" style="flex:1;"><label>Departure Station</label><input type="text" id="new-dep" placeholder="e.g. Riyadh"></div>
+                        <div class="form-group" style="flex:1;"><label>Arrival Station</label><input type="text" id="new-arr" placeholder="e.g. Dammam"></div>
+                        <div class="form-group" style="flex:1;"><label>Price (SAR)</label><input type="number" id="new-price" placeholder="150"></div>
+                    </div>
+                    <button onclick="createNewRoute()" class="primary-btn" style="width:auto; padding:10px 25px;">Add Route</button>
+                </div>
                 <table class="management-table">
                     <thead>
                         <tr>
@@ -210,6 +277,8 @@
         </div>
 
         <div id="booking-section">
+            <p id="booking-status" role="status" aria-live="polite"></p>
+            <button type="button" class="select-btn" onclick="loadBookingTrains()">Refresh schedules</button>
             <input type="text" id="trainSearch" class="search-bar" placeholder="🔍 Search trains by route or ID..." onkeyup="filterTrains()">
             
             <div id="train-selection-list"></div>
@@ -231,11 +300,30 @@
                         <input type="tel" id="contact" required>
                     </div>
                 </div>
-                <button type="submit" class="primary-btn" style="width:auto; padding: 14px 40px; margin-top: 10px;">Issue Ticket</button>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select id="paymentMethod" required>
+                            <option value="Credit Card">💳 Card payment at station</option>
+                            <option value="Cash at Station">💵 Cash at Station</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="max-width: 160px;">
+                        <label>Number of Tickets</label>
+                        <input type="number" id="numberOfTickets" value="1" min="1" max="20" required oninput="updateTicketPriceSummary()">
+                    </div>
+                </div>
+
+                <div id="price-summary" style="display:none; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; color: var(--text-muted);">
+                    🎫 <span id="price-summary-text"></span>
+                </div>
+
+                <button id="booking-submit" type="submit" class="primary-btn" disabled style="width:auto; padding: 14px 40px; margin-top: 10px;">Confirm & Issue Ticket(s)</button>
             </form>
 
             <div id="admin-tickets-section">
-                <h3 class="logo-text" style="font-size: 20px; margin-bottom: 15px;">Booked Seats Management</h3>
+                <h3 class="logo-text" id="ticket-table-title" style="font-size: 20px; margin-bottom: 15px;">Booked Seats Management</h3>
                 <div style="overflow-x: auto;">
                     <table class="management-table">
                         <thead>
@@ -243,7 +331,9 @@
                                 <th>PNR #</th>
                                 <th>Passenger Name</th>
                                 <th style="text-align: center;">Route ID</th>
-                                <th style="text-align: center; width: 100px;">Cancel Seat</th>
+                                <th style="text-align: center;">Status</th>
+                                <th style="text-align: center; width: 160px;">Print Options</th>
+                                <th style="text-align: center; width: 100px;" id="cancel-seat-header">Cancel Seat</th>
                             </tr>
                         </thead>
                         <tbody id="ticketList"></tbody>
@@ -252,13 +342,39 @@
             </div>
         </div>
 
+        <div id="passengers-section">
+            <div style="overflow-x: auto;">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Email Address</th>
+                            <th>National ID</th>
+                            <th>Mobile Number</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminPassengerList"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="staff-section">
+            <div style="background: var(--bg-input); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+                <h4 style="margin-top:0; margin-bottom:15px; color: var(--text-main);">Add New Staff Member</h4>
+                <div class="form-row" style="display:flex; gap:15px;">
+                    <div class="form-group" style="flex:1;"><label>Username</label><input type="text" id="new-staff-user"></div>
+                    <div class="form-group" style="flex:1;"><label>Email</label><input type="email" id="new-staff-email"></div>
+                </div>
+                <button onclick="createNewStaffAccount()" class="primary-btn" style="width:auto; padding:10px 25px;">Create Account</button>
+            </div>
+
             <div style="overflow-x: auto;">
                 <table class="management-table">
                     <thead>
                         <tr>
                             <th>Staff Info</th>
-                            <th>Password</th>
                             <th style="text-align: center;">Role</th>
                             <th style="text-align: center; width: 100px;">Revoke Access</th>
                         </tr>
@@ -269,6 +385,10 @@
         </div>
 
         <div id="reports-section">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button onclick="printSystemReport()" class="primary-btn" style="width: auto;">🖨️ Print Full Report</button>
+            </div>
+            
             <div class="widget-container">
                 <div class="widget">
                     <div class="widget-title">Total System Revenue</div>
@@ -278,7 +398,7 @@
 
             <h3 class="logo-text" style="font-size: 20px; margin-bottom: 15px;">Train Occupancy Rates</h3>
             <div style="overflow-x: auto;">
-                <table class="management-table">
+                <table class="management-table" id="reportTable">
                     <thead>
                         <tr>
                             <th>Train Route</th>
@@ -295,7 +415,10 @@
 
     <script>
         const API_URL = '/api'; 
-        let currentRole = 'staff'; 
+        let currentPortal = 'passenger'; 
+        let currentRole = 'passenger';   
+        let loggedInPassengerData = null; 
+        let globalTicketsData = []; 
 
         function initTheme() {
             const savedTheme = localStorage.getItem('appTheme') || 'dark';
@@ -303,6 +426,10 @@
             document.getElementById('themeBtn').innerHTML = savedTheme === 'dark' ? '☀️' : '🌙';
         }
         initTheme();
+        window.addEventListener('unhandledrejection', event => {
+            event.preventDefault();
+            showSmartModal('error', 'Request Failed', escapeHtml(event.reason?.message || 'Please try again.'));
+        });
 
         function toggleTheme() {
             const body = document.body;
@@ -329,7 +456,6 @@
                 actions.innerHTML = `<button onclick="closeSmartModal()" class="primary-btn" style="background-color: #dc2626; width: 100%;">Close</button>`;
             } else if(type === 'confirm') {
                 icon.innerHTML = '⚠️';
-                
                 const btnYes = document.createElement('button');
                 btnYes.className = 'primary-btn';
                 btnYes.style.backgroundColor = '#dc2626';
@@ -351,108 +477,182 @@
 
         function closeSmartModal() { document.getElementById('smartModal').style.display = 'none'; }
 
+        function setPortal(portal) {
+            currentPortal = portal;
+            document.getElementById('portal-passenger-btn').className = portal === 'passenger' ? 'role-btn active' : 'role-btn';
+            document.getElementById('portal-staff-btn').className = portal === 'staff_portal' ? 'role-btn active' : 'role-btn';
+            
+            if(portal === 'passenger') {
+                currentRole = 'passenger';
+                document.getElementById('employee-roles').style.display = 'none';
+                document.getElementById('auth-links').style.display = 'flex';
+                document.getElementById('create-account-text').style.display = 'inline';
+            } else {
+                currentRole = 'staff'; 
+                document.getElementById('employee-roles').style.display = 'flex';
+                setRole('staff'); 
+            }
+            toggleAuthMode('login');
+        }
+
         function setRole(role) {
             currentRole = role;
             document.getElementById('btn-admin').className = role === 'admin' ? 'role-btn active' : 'role-btn';
             document.getElementById('btn-staff').className = role === 'staff' ? 'role-btn active' : 'role-btn';
-            document.getElementById('staff-auth-links').style.display = role === 'staff' ? 'flex' : 'none';
+            document.getElementById('auth-links').style.display = 'flex';
+            document.getElementById('create-account-text').style.display = 'none';
         }
 
         function toggleAuthMode(mode) {
             document.getElementById('login-form-area').style.display = mode === 'login' ? 'block' : 'none';
-            document.getElementById('register-form-area').style.display = mode === 'register' ? 'block' : 'none';
+            document.getElementById('register-passenger-area').style.display = (mode === 'register' && currentPortal === 'passenger') ? 'block' : 'none';
             document.getElementById('forgot-form-area').style.display = mode === 'forgot' ? 'block' : 'none';
             
             if(mode === 'login') document.getElementById('login-subtitle').innerText = 'Secure System Access';
-            if(mode === 'register') document.getElementById('login-subtitle').innerText = 'Create New Staff Account';
+            if(mode === 'register') document.getElementById('login-subtitle').innerText = 'Create Passenger Account';
             if(mode === 'forgot') document.getElementById('login-subtitle').innerText = 'Reset Password';
         }
 
-        async function handleRegister(event) {
-            event.preventDefault();
-            const e = document.getElementById('reg-email').value.toLowerCase().trim();
-            const u = document.getElementById('reg-username').value.toLowerCase().trim();
-            const p = document.getElementById('reg-password').value;
-            
-            if(u === 'staff' || u === 'admin') {
-                showSmartModal('error', 'Registration Failed', 'This username is reserved by the system!');
-                return;
-            }
+        let sessionToken = null;
 
-            try {
-                const res = await fetch(`${API_URL}/staff`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, email: e, password: p })
-                });
-                
-                if(res.ok) {
-                    document.getElementById('reg-email').value = '';
-                    document.getElementById('reg-username').value = '';
-                    document.getElementById('reg-password').value = '';
-                    toggleAuthMode('login');
-                    showSmartModal('success', 'Account Created', 'Staff account created successfully! You can now login.');
-                } else {
-                    showSmartModal('error', 'Registration Failed', 'Username or Email might already exist.');
-                }
-            } catch(error) { 
-                showSmartModal('error', 'System Error', 'Could not connect to the server.');
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function inlineArg(value) {
+            return escapeHtml(JSON.stringify(String(value ?? '')));
+        }
+
+        async function apiFetch(url, options = {}) {
+            const headers = new Headers(options.headers);
+            if (sessionToken) headers.set('Authorization', 'Bearer ' + sessionToken);
+            const res = await fetch(url, { ...options, headers });
+            const handled = ['/api/login', '/api/book', '/api/passenger_users'].includes(url) || (url === '/api/trains' && (!options.method || options.method === 'GET'));
+            if (!res.ok && !handled) {
+                const body = await res.json().catch(() => ({}));
+                const message = body.message || 'Request failed. Please try again.';
+                showSmartModal('error', 'Request Failed', escapeHtml(message));
+                throw new Error(message);
             }
+            return res;
+        }
+
+        async function handlePassengerRegister(event) {
+            event.preventDefault();
+            const payload = {
+                name: document.getElementById('reg-pass-name').value,
+                passengerID: document.getElementById('reg-pass-id').value,
+                contactNumber: document.getElementById('reg-pass-contact').value,
+                email: document.getElementById('reg-pass-email').value.toLowerCase().trim(),
+                username: document.getElementById('reg-pass-username').value.toLowerCase().trim(),
+                password: document.getElementById('reg-pass-password').value
+            };
+            try {
+                const res = await apiFetch(`${API_URL}/passenger_users`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                document.getElementById('reg-pass-password').value = '';
+                toggleAuthMode('login');
+                showSmartModal('success', 'Account Created', 'Your passenger account is ready. Please sign in.');
+            } catch (error) { showSmartModal('error', 'Registration Failed', escapeHtml(error.message)); }
         }
 
         function handleForgotPassword(event) {
             event.preventDefault();
-            const email = document.getElementById('forgot-email').value;
-            showSmartModal('success', 'Email Sent', `If an account exists for <strong>${email}</strong>, a password reset link has been sent.`);
-            document.getElementById('forgot-email').value = '';
-            toggleAuthMode('login');
+            showSmartModal('error', 'Password Reset', 'Automatic email reset is not configured. Contact the project administrator.');
         }
 
         async function handleLogin(event) {
             event.preventDefault();
-            const u = document.getElementById('username').value.toLowerCase().trim();
-            const p = document.getElementById('password').value;
-            let loginSuccessFlag = false;
-
-            if (currentRole === 'admin') {
-                if (u === 'admin' && p === 'admin123') loginSuccessFlag = true;
-            } else {
-                if (u === 'staff' && p === 'staff123') loginSuccessFlag = true;
-                else {
-                    try {
-                        const res = await fetch(`${API_URL}/staff`);
-                        const staffUsers = await res.json();
-                        const foundUser = staffUsers.find(user => user.username === u && user.password === p);
-                        if(foundUser) loginSuccessFlag = true;
-                    } catch(e) {}
+            try {
+                const res = await apiFetch(`${API_URL}/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value.toLowerCase().trim(),
+                        password: document.getElementById('password').value,
+                        portal: currentPortal
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                sessionToken = data.token;
+                currentRole = data.role;
+                loggedInPassengerData = currentRole === 'passenger' ? data.account : null;
+                document.getElementById('password').value = '';
+                if (data.mustChangePassword) {
+                    document.getElementById('firstLoginModal').style.display = 'flex';
+                    return;
                 }
-            }
+                launchApp();
+            } catch (error) { showSmartModal('error', 'Access Denied', escapeHtml(error.message)); }
+        }
 
-            if(loginSuccessFlag) launchApp();
-            else showSmartModal('error', 'Access Denied', 'Invalid Credentials! Check your username and password.');
+        async function submitNewStaffPassword() {
+            const pass1 = document.getElementById('newStaffPassword').value;
+            const pass2 = document.getElementById('confirmStaffPassword').value;
+            if (pass1.length < 6) { showSmartModal('error', 'Weak Password', 'Use at least 6 characters.'); return; }
+            if (pass1 !== pass2) { showSmartModal('error', 'Mismatch', 'Passwords do not match.'); return; }
+            try {
+                await apiFetch(`${API_URL}/staff/update-password`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword: pass1 })
+                });
+                sessionToken = null;
+                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('login-section').style.display = 'block';
+                document.getElementById('firstLoginModal').style.display = 'none';
+                document.getElementById('newStaffPassword').value = '';
+                document.getElementById('confirmStaffPassword').value = '';
+                showSmartModal('success', 'Password Updated', 'Please sign in with your new password.');
+            } catch (error) { showSmartModal('error', 'Update Failed', escapeHtml(error.message)); }
         }
 
         function launchApp() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
             
-            if (currentRole === 'staff') {
-                document.getElementById('admin-tabs').style.display = 'none';
-                document.getElementById('admin-tickets-section').style.display = 'block'; 
-                document.getElementById('actions-header').style.display = 'none'; 
+            if (currentRole === 'passenger') {
+                document.getElementById('tab-staff').style.display = 'none';
                 document.getElementById('tab-reports').style.display = 'none';
-                document.getElementById('page-title').innerText = 'Ticketing System';
-                document.getElementById('page-subtitle').innerText = 'Select a route and issue tickets';
+                document.getElementById('tab-passengers').style.display = 'none';
+                document.getElementById('actions-header').style.display = 'none'; 
+                document.getElementById('cancel-seat-header').style.display = 'none'; 
+                document.getElementById('add-route-box').style.display = 'none';
+                
+                document.getElementById('name').value = loggedInPassengerData.name;
+                document.getElementById('passengerID').value = loggedInPassengerData.passengerID;
+                document.getElementById('contact').value = loggedInPassengerData.contactNumber;
+                document.getElementById('name').readOnly = true;
+                document.getElementById('passengerID').readOnly = true;
+                document.getElementById('contact').readOnly = true;
+                
+                document.getElementById('ticket-table-title').innerText = "My Bookings";
+                switchTab('booking');
+            } else if (currentRole === 'staff') {
+                document.getElementById('tab-staff').style.display = 'none';
+                document.getElementById('tab-reports').style.display = 'none';
+                document.getElementById('tab-passengers').style.display = 'none';
+                document.getElementById('actions-header').style.display = 'none'; 
+                document.getElementById('cancel-seat-header').style.display = 'table-cell'; 
+                document.getElementById('ticket-table-title').innerText = "Booked Seats Management";
+                document.getElementById('add-route-box').style.display = 'none';
                 switchTab('booking');
             } else {
-                document.getElementById('admin-tabs').style.display = 'flex';
-                document.getElementById('admin-tickets-section').style.display = 'block'; 
-                document.getElementById('actions-header').style.display = 'table-cell'; 
+                document.getElementById('tab-staff').style.display = 'block';
                 document.getElementById('tab-reports').style.display = 'block';
-                document.getElementById('page-title').innerText = 'Train Schedules';
-                document.getElementById('page-subtitle').innerText = 'View and manage routes and timings';
+                document.getElementById('tab-passengers').style.display = 'block';
+                document.getElementById('actions-header').style.display = 'table-cell'; 
+                document.getElementById('cancel-seat-header').style.display = 'table-cell'; 
+                document.getElementById('ticket-table-title').innerText = "Booked Seats Management";
+                document.getElementById('add-route-box').style.display = 'block';
                 switchTab('schedules');
             }
+            checkPendingReceipts();
         }
 
         function switchTab(tab) {
@@ -460,28 +660,76 @@
             document.getElementById('booking-section').style.display = tab === 'booking' ? 'block' : 'none';
             document.getElementById('staff-section').style.display = tab === 'staff' ? 'block' : 'none';
             document.getElementById('reports-section').style.display = tab === 'reports' ? 'block' : 'none';
+            document.getElementById('passengers-section').style.display = tab === 'passengers' ? 'block' : 'none';
             
-            if(currentRole === 'admin') {
-                document.getElementById('tab-schedules').className = tab === 'schedules' ? 'tab active' : 'tab';
-                document.getElementById('tab-booking').className = tab === 'booking' ? 'tab active' : 'tab';
-                document.getElementById('tab-staff').className = tab === 'staff' ? 'tab active' : 'tab';
-                document.getElementById('tab-reports').className = tab === 'reports' ? 'tab active' : 'tab';
-                
-                if(tab === 'schedules') { document.getElementById('page-title').innerText = 'Train Schedules'; document.getElementById('page-subtitle').innerText = 'View and manage routes and timings'; }
-                if(tab === 'booking') { document.getElementById('page-title').innerText = 'Ticketing System'; document.getElementById('page-subtitle').innerText = 'Manage bookings and passengers'; }
-                if(tab === 'staff') { document.getElementById('page-title').innerText = 'Staff Management'; document.getElementById('page-subtitle').innerText = 'Manage employee accounts and access'; }
-                if(tab === 'reports') { document.getElementById('page-title').innerText = 'System Reports'; document.getElementById('page-subtitle').innerText = 'Revenue and occupancy analytics'; }
-            }
+            document.getElementById('tab-schedules').className = tab === 'schedules' ? 'tab active' : 'tab';
+            document.getElementById('tab-booking').className = tab === 'booking' ? 'tab active' : 'tab';
+            document.getElementById('tab-staff').className = tab === 'staff' ? 'tab active' : 'tab';
+            document.getElementById('tab-reports').className = tab === 'reports' ? 'tab active' : 'tab';
+            document.getElementById('tab-passengers').className = tab === 'passengers' ? 'tab active' : 'tab';
+            
+            if(tab === 'schedules') { document.getElementById('page-title').innerText = 'Train Schedules'; }
+            if(tab === 'booking') { document.getElementById('page-title').innerText = currentRole === 'passenger' ? 'Book a Ticket' : 'Ticketing System'; }
+            if(tab === 'staff') { document.getElementById('page-title').innerText = 'Staff Management'; }
+            if(tab === 'reports') { document.getElementById('page-title').innerText = 'System Reports'; }
+            if(tab === 'passengers') { document.getElementById('page-title').innerText = 'Passenger Management'; }
 
             if(tab === 'schedules') loadSchedules();
             if(tab === 'booking') { loadBookingTrains(); loadTickets(); }
             if(tab === 'staff') loadStaffList();
             if(tab === 'reports') loadReports();
+            if(tab === 'passengers') loadAdminPassengers();
+        }
+
+        let bookingAllowed = false;
+        let bookingInFlight = false;
+        let scheduleRequestVersion = 0;
+
+        function setBookingAvailability(allowed) {
+            bookingAllowed = allowed;
+            document.getElementById('booking-submit').disabled = !allowed || bookingInFlight;
+            if (!allowed) {
+                document.getElementById('trainID').value = '';
+                window._selectedTrainPrice = 0;
+                document.getElementById('price-summary').style.display = 'none';
+                document.querySelectorAll('#train-selection-list .select-btn').forEach(button => { button.disabled = true; });
+            }
+        }
+
+        async function fetchTrainSchedules() {
+            const version = ++scheduleRequestVersion;
+            setBookingAvailability(false);
+            for (const id of ['schedule-status', 'booking-status']) {
+                document.getElementById(id).textContent = 'Loading schedules...';
+            }
+            let data;
+            try {
+                const res = await apiFetch(`${API_URL}/trains`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+                data = await res.json();
+                if (!res.ok || !Array.isArray(data.trains)) {
+                    throw new Error(data.message || 'Schedules are temporarily unavailable. Please try again later.');
+                }
+            } catch (error) {
+                data = { trains: [], source: 'unavailable', bookingAllowed: false,
+                    message: error.name === 'TimeoutError' || error instanceof TypeError
+                        ? 'Could not reach the server. Please refresh and try again.' : error.message };
+            }
+            if (version !== scheduleRequestVersion) return null;
+            const allowed = data.source === 'live' && data.bookingAllowed === true;
+            setBookingAvailability(allowed);
+            const message = data.source === 'cache'
+                ? `${data.message} Last updated: ${new Date(data.lastUpdated).toLocaleString()}`
+                : data.source === 'live' ? 'Schedules updated. Booking is available.' : data.message;
+            for (const id of ['schedule-status', 'booking-status']) {
+                document.getElementById(id).textContent = message;
+            }
+            return data;
         }
 
         async function loadSchedules() {
-            const res = await fetch(`${API_URL}/trains`);
-            const trains = await res.json();
+            const schedule = await fetchTrainSchedules();
+            if (!schedule) return;
+            const trains = schedule.trains;
             const list = document.getElementById('scheduleList');
             let htmlStr = '';
             
@@ -492,74 +740,122 @@
                 if(dbStatus === 'Cancelled' || t.availableSeats === 0) statusClass = 'status-cancelled';
                 const finalStatus = t.availableSeats === 0 ? 'Full' : dbStatus;
 
-                const actionsHtml = (currentRole === 'admin') ? `
+                const actionsHtml = (currentRole === 'admin' && schedule.bookingAllowed) ? `
                     <td style="text-align: center; width: 100px;">
-                        <button class="action-btn" onclick="openEditModal('${t.trainID}', '${t.price}', '${dbStatus}')" title="Edit">✏️</button>
+                        <button class="action-btn" onclick="openEditModal(${inlineArg(t.trainID)}, ${inlineArg(t.price)}, ${inlineArg(dbStatus)}, ${inlineArg(t.departureDate)}, ${inlineArg(t.departuretime || '10:00')}, ${inlineArg(t.totalCapacity)}, '${t.totalCapacity - t.availableSeats}')" title="Edit">✏️</button>
                     </td>` : '';
 
                 htmlStr += `
                     <tr>
-                        <td><span class="text-bold">${t.trainID}</span></td>
-                        <td><span class="text-bold">${t.departureStation}</span><span class="text-small">to ${t.arrivalStation}</span></td>
-                        <td><span class="text-bold">${t.departureDate}</span><span class="text-small">10:00 AM</span></td>
-                        <td style="text-align: center;"><span class="text-bold" style="color:${t.availableSeats>0?'#16a34a':'#dc2626'}">${t.availableSeats}</span></td>
-                        <td style="text-align: center;"><span class="text-bold">${t.price} SAR</span></td>
-                        <td style="text-align: center;"><span class="status ${statusClass}">${finalStatus}</span></td>
+                        <td><span class="text-bold">${escapeHtml(t.trainID)}</span></td>
+                        <td><span class="text-bold">${escapeHtml(t.departureStation)}</span><span class="text-small">to ${escapeHtml(t.arrivalStation)}</span></td>
+                        <td><span class="text-bold">${escapeHtml(t.departureDate)}</span><span class="text-small">${escapeHtml(t.departuretime || '10:00')}</span></td>
+                        <td style="text-align: center;"><span class="text-bold" style="color:${t.availableSeats>0?'#16a34a':'#dc2626'}">${escapeHtml(t.availableSeats)}</span></td>
+                        <td style="text-align: center;"><span class="text-bold">${escapeHtml(t.price)} SAR</span></td>
+                        <td style="text-align: center;"><span class="status ${statusClass}">${escapeHtml(finalStatus)}</span></td>
                         ${actionsHtml}
                     </tr>
                 `;
             });
-            list.innerHTML = htmlStr;
+            list.innerHTML = htmlStr || '<tr><td colspan="7">No schedules to display.</td></tr>';
         }
 
-        function openEditModal(id, price, status) {
+        function openEditModal(id, price, status, date, time, capacity, booked) {
             document.getElementById('editTrainIdDisplay').innerText = id;
             document.getElementById('editTrainId').value = id;
             document.getElementById('editPrice').value = price;
             document.getElementById('editStatus').value = status;
+            document.getElementById('editDate').value = date || '';
+            document.getElementById('editDate').min = new Date().toISOString().split('T')[0];
+            document.getElementById('editTime').value = time || '10:00';
+            document.getElementById('editCapacity').value = capacity || 50;
+            document.getElementById('editCurrentBooked').value = booked || 0;
+            const bookedCount = parseInt(booked) || 0;
+            document.getElementById('editCapacityHint').innerText = `Currently booked: ${bookedCount} seat(s). Minimum allowed: ${bookedCount}.`;
+            document.getElementById('editCapacity').min = bookedCount;
             document.getElementById('editModal').style.display = 'flex';
         }
-
         function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
         async function saveTrainEdit() {
             const id = document.getElementById('editTrainId').value;
-            const newPrice = document.getElementById('editPrice').value;
+            const newPrice = parseFloat(document.getElementById('editPrice').value);
             const newStatus = document.getElementById('editStatus').value;
-            await fetch(`${API_URL}/trains/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ price: newPrice, status: newStatus }) });
-            closeEditModal(); loadSchedules();
+            const newDate = document.getElementById('editDate').value;
+            const newTime = document.getElementById('editTime').value;
+            const newCapacity = parseInt(document.getElementById('editCapacity').value);
+            const booked = parseInt(document.getElementById('editCurrentBooked').value) || 0;
+
+            if(newCapacity < booked) {
+                showSmartModal('error', 'Invalid Capacity', `Cannot set capacity below the number of booked seats (${booked}).`);
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            if(newDate && newDate < today) {
+                showSmartModal('error', 'Invalid Date', 'Departure date cannot be in the past.');
+                return;
+            }
+
+            try {
+                const res = await apiFetch(`${API_URL}/trains/${id}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        price: newPrice,
+                        status: newStatus,
+                        departureDate: newDate,
+                        departureTime: newTime,
+                        totalCapacity: newCapacity,
+                        availableSeats: newCapacity - booked
+                    })
+                });
+
+                const result = await res.json();
+
+                if(!res.ok) {
+                    showSmartModal('error', 'Update Failed', escapeHtml(result.error || 'Unknown error from server.'));
+                    return;
+                }
+
+                closeEditModal();
+                showSmartModal('success', 'Route Updated', 'Train route details have been updated successfully.');
+                loadSchedules();
+            } catch(e) {
+                showSmartModal('error', 'Connection Error', 'Could not reach the server: ' + e.message);
+            }
         }
+        
 
         async function loadBookingTrains() {
-            const res = await fetch(`${API_URL}/trains`);
-            const trains = await res.json();
+            const schedule = await fetchTrainSchedules();
+            if (!schedule) return;
+            const trains = schedule.trains;
             const list = document.getElementById('train-selection-list');
             let htmlStr = '';
             
             trains.forEach(t => {
                 const dbStatus = t.status || 'On Time';
-                const isUnavailable = t.availableSeats === 0 || dbStatus === 'Cancelled';
+                const isUnavailable = !schedule.bookingAllowed || t.availableSeats === 0 || dbStatus === 'Cancelled';
                 let btnHtml = isUnavailable 
                     ? `<button type="button" class="select-btn" style="border-color:#dc2626; color:#dc2626; cursor:not-allowed;" disabled>Unavailable</button>` 
-                    : `<button type="button" class="select-btn" onclick="selectTrainForBooking('${t.trainID}')">Select</button>`;
+                    : `<button type="button" class="select-btn" onclick="selectTrainForBooking(${inlineArg(t.trainID)})">Select</button>`;
 
                 htmlStr += `
                     <div class="train-card searchable-card">
                         <div class="train-card-info">
-                            <strong class="search-target">${t.trainName || 'Route'} (${t.trainID})</strong>
-                            <span class="search-target">${t.departureStation} ➔ ${t.arrivalStation} | ${t.price} SAR | <strong>${t.availableSeats} Seats Left</strong></span>
+                            <strong class="search-target">${t.trainName || 'Route'} (${escapeHtml(t.trainID)})</strong>
+                            <span class="search-target">${escapeHtml(t.departureStation)} ➔ ${escapeHtml(t.arrivalStation)} | ${escapeHtml(t.price)} SAR | <strong>${escapeHtml(t.availableSeats)} Seats Left</strong></span>
                         </div>
                         ${btnHtml}
                     </div>
                 `;
             });
-            list.innerHTML = htmlStr;
+            list.innerHTML = htmlStr || '<p>No schedules to display.</p>';
         }
 
         function filterTrains() {
             const input = document.getElementById('trainSearch').value.toLowerCase();
             const cards = document.getElementsByClassName('searchable-card');
-            
             for (let i = 0; i < cards.length; i++) {
                 const text = cards[i].innerText.toLowerCase();
                 if (text.includes(input)) cards[i].style.display = "flex";
@@ -568,50 +864,174 @@
         }
 
         function selectTrainForBooking(id) {
+            if (!bookingAllowed) return;
             const input = document.getElementById('trainID');
             input.value = id;
             input.style.borderColor = 'var(--primary-blue)';
             input.style.backgroundColor = 'var(--bg-input)';
+            // Store selected train price for summary
+            const cards = document.querySelectorAll('.searchable-card');
+            cards.forEach(card => {
+                const btn = card.querySelector('.select-btn');
+                if(btn && btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${id}'`)) {
+                    const text = card.querySelector('.search-target:last-child')?.innerText || '';
+                    const priceMatch = text.match(/(\d+(?:\.\d+)?)\s*SAR/);
+                    window._selectedTrainPrice = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                }
+            });
+            updateTicketPriceSummary();
+        }
+
+        function updateTicketPriceSummary() {
+            const count = parseInt(document.getElementById('numberOfTickets')?.value) || 1;
+            const price = window._selectedTrainPrice || 0;
+            const summaryDiv = document.getElementById('price-summary');
+            const summaryText = document.getElementById('price-summary-text');
+            const trainID = document.getElementById('trainID')?.value;
+
+            if(price > 0 && trainID && !trainID.includes('Select') && count > 0) {
+                const total = (price * count).toFixed(2);
+                summaryText.innerText = `${count} ticket(s) × ${price} SAR = Total: ${total} SAR`;
+                summaryDiv.style.display = 'block';
+            } else {
+                summaryDiv.style.display = 'none';
+            }
+        }
+
+        async function createNewRoute() {
+            const dep = document.getElementById('new-dep').value;
+            const arr = document.getElementById('new-arr').value;
+            const price = document.getElementById('new-price').value;
+            if(!dep || !arr || !price) { showSmartModal('error', 'Fields Required', 'Please fill all route fields.'); return; }
+            
+            await apiFetch(`${API_URL}/trains`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ departureStation: dep, arrivalStation: arr, price: price })
+            });
+            
+            document.getElementById('new-dep').value = '';
+            document.getElementById('new-arr').value = '';
+            document.getElementById('new-price').value = '';
+            showSmartModal('success', 'Route Added', 'New train route created successfully!');
+            loadSchedules();
         }
 
         async function bookTicket(event) {
             event.preventDefault();
-            const payload = { trainID: document.getElementById('trainID').value, passengerID: document.getElementById('passengerID').value, name: document.getElementById('name').value, contactNumber: document.getElementById('contact').value };
+            if (bookingInFlight) return;
+            if (!bookingAllowed) {
+                showSmartModal('error', 'Booking Unavailable', 'Refresh schedules before booking.');
+                return;
+            }
+            const count = Number(document.getElementById('numberOfTickets').value);
+            if (!Number.isInteger(count) || count < 1 || count > 20) { showSmartModal('error', 'Invalid Count', 'Choose 1 to 20 tickets.'); return; }
+            const payload = { 
+                trainID: document.getElementById('trainID').value, 
+                passengerID: document.getElementById('passengerID').value, 
+                name: document.getElementById('name').value, 
+                contactNumber: document.getElementById('contact').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                numberOfTickets: count
+            };
             
             if(!payload.trainID || payload.trainID.includes('Select')) { 
-                showSmartModal('error', 'Missing Selection', 'Please select a route from the list first.');
-                return; 
+                showSmartModal('error', 'Missing Selection', 'Please select a route from the list first.'); return; 
             }
             
-            const res = await fetch(`${API_URL}/book`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            const result = await res.json();
+            let res, result;
+            bookingInFlight = true;
+            document.getElementById('booking-submit').disabled = true;
+            try {
+                res = await apiFetch(`${API_URL}/book`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                result = await res.json();
+            } catch (error) {
+                setBookingAvailability(false);
+                showSmartModal('error', 'Connection Lost', 'The booking result is unknown. Check your bookings before submitting again.');
+                return;
+            } finally {
+                bookingInFlight = false;
+                document.getElementById('booking-submit').disabled = !bookingAllowed;
+            }
+            if (res.status === 503) {
+                setBookingAvailability(false);
+                document.getElementById('booking-status').textContent = result.message;
+            }
             
             if(res.ok) {
-                showSmartModal('success', 'Reservation Confirmed!', `Ticket issued successfully. PNR: <strong style="color:var(--text-main); font-size:16px;">${result.ticketNumber}</strong>`);
-                document.getElementById('bookingForm').reset();
+                let successMsg = '';
+                if(result.count > 1) {
+                    const pnrList = result.ticketNumbers.map(n => `<strong>#${n}</strong>`).join(', ');
+                    successMsg = `${result.count} tickets issued successfully!<br><br>PNRs: ${pnrList}`;
+                } else {
+                    successMsg = `Ticket issued successfully. PNR: <strong style="color:var(--text-main); font-size:16px;">${result.ticketNumber}</strong>`;
+                }
+                showSmartModal('success', 'Booking Created — Payment Pending', successMsg);
                 document.getElementById('trainID').value = '';
                 document.getElementById('trainID').style.backgroundColor = 'var(--border-color)';
+                document.getElementById('numberOfTickets').value = '1';
+                document.getElementById('price-summary').style.display = 'none';
+                window._selectedTrainPrice = 0;
+                if(currentRole !== 'passenger'){
+                    document.getElementById('name').value = '';
+                    document.getElementById('passengerID').value = '';
+                    document.getElementById('contact').value = '';
+                }
                 loadBookingTrains(); loadTickets(); 
             } else { 
-                showSmartModal('error', 'Booking Failed', result.message || 'Error processing reservation.');
+                showSmartModal('error', 'Booking Failed', escapeHtml(result.message || 'Error processing reservation.'));
             }
         }
 
         async function loadTickets() {
-            const res = await fetch(`${API_URL}/tickets`);
-            const tickets = await res.json();
+            const res = await apiFetch(`${API_URL}/tickets`);
+            globalTicketsData = await res.json();
+            
+            let ticketsToDisplay = globalTicketsData;
+            if(currentRole === 'passenger') {
+                ticketsToDisplay = ticketsToDisplay.filter(t => t.passengerID === loggedInPassengerData.passengerID);
+            }
+
             const list = document.getElementById('ticketList');
+            document.getElementById('admin-tickets-section').style.display = ticketsToDisplay.length > 0 ? 'block' : 'none';
             let htmlStr = '';
             
-            tickets.forEach(t => {
+            ticketsToDisplay.forEach(t => {
+                const isPending = t.status === 'Pending';
+                
+                let actions = '';
+                if(isPending) {
+                    if(currentRole === 'passenger') {
+                        actions += `<button class="action-btn" onclick="openUploadModal(${inlineArg(t.ticketNumber)})" style="background:#d97706; color:white; padding:4px 8px; border-radius:4px;">📤 Pay</button>`;
+                    } else {
+                        actions += `<button class="action-btn" onclick="viewReceipt(${inlineArg(t.ticketNumber)})" style="background:#6b7280; color:white; padding:4px 8px; border-radius:4px;">👁️</button>`;
+                        actions += `<button class="action-btn" onclick="approvePayment(${inlineArg(t.ticketNumber)})" style="background:#16a34a; color:white; padding:4px 8px; border-radius:4px; margin:0 5px;">✅</button>`;
+                        actions += `<button class="action-btn" onclick="rejectPayment(${inlineArg(t.ticketNumber)})" style="background:#dc2626; color:white; padding:4px 8px; border-radius:4px;">❌</button>`;
+                    }
+                }
+                actions += `<button class="action-btn" onclick="printDocument(${inlineArg(t.ticketNumber)}, 'receipt')" style="background:var(--primary-blue); color:white; padding:4px 8px; border-radius:4px; margin-right:5px; font-size: 14px;">🧾</button>`;
+                actions += `<button class="action-btn" onclick="printDocument(${inlineArg(t.ticketNumber)}, 'boarding')" style="background:var(--primary-blue); color:white; padding:4px 8px; border-radius:4px; font-size: 14px;">🎟️</button>`;
+
+                const cancelHtml = (currentRole !== 'passenger') ? `
+                    <td style="text-align: center; width: 100px;">
+                        <button class="action-btn" onclick="cancelTicket(${inlineArg(t.ticketNumber)})">🗑️</button>
+                    </td>` : '';
+
                 htmlStr += `
                     <tr>
-                        <td><span class="text-bold">#${t.ticketNumber}</span></td>
-                        <td><span class="text-bold">${t.passengers?.name || 'Unknown'}</span><span class="text-small">ID: ${t.passengerID || 'N/A'}</span></td>
-                        <td style="text-align: center;"><span class="text-bold">${t.trainID}</span></td>
-                        <td style="text-align: center; width: 100px;">
-                            <button class="action-btn" onclick="cancelTicket('${t.ticketNumber}')" title="Cancel Booking">🗑️</button>
-                        </td>
+                        <td><span class="text-bold">#${escapeHtml(t.ticketNumber)}</span></td>
+                        <td><span class="text-bold">${escapeHtml(t.passengerName)}</span><span class="text-small">ID: ${escapeHtml(t.passengerID)}</span></td>
+                        <td style="text-align: center;"><span class="text-bold">${escapeHtml(t.trainID)}</span></td>
+                       <td style="text-align: center;">
+    <span class="status" style="
+        background: ${t.status === 'Pending' ? '#d9770620' : (t.status === 'Cancelled' ? '#ef444420' : '#16a34a20')}; 
+        color: ${t.status === 'Pending' ? '#d97706' : (t.status === 'Cancelled' ? '#dc2626' : '#16a34a')};
+    ">
+        ${escapeHtml(t.status)}
+    </span>
+</td>
+                        <td style="text-align: center; width: 180px;">${actions}</td>
+                        ${cancelHtml}
                     </tr>
                 `;
             });
@@ -619,54 +1039,88 @@
         }
 
         function cancelTicket(id) {
-            showSmartModal('confirm', 'Cancel Booking', `Are you sure you want to cancel passenger seat <strong>#${id}</strong>?`, async () => {
-                await fetch(`${API_URL}/tickets/${id}`, { method: 'DELETE' });
-                loadTickets(); loadBookingTrains(); loadSchedules(); loadReports();
+            showSmartModal('confirm', 'Cancel Booking', `Are you sure you want to cancel passenger seat <strong>#${escapeHtml(id)}</strong>?`, async () => {
+                await apiFetch(`${API_URL}/tickets/${id}`, { method: 'DELETE' });
+                loadTickets(); loadBookingTrains(); if (currentRole === 'admin') { loadSchedules(); loadReports(); }
             });
         }
 
-        async function loadStaffList() {
-            const list = document.getElementById('staffList');
-            let htmlStr = `
-                <tr>
-                    <td><span class="text-bold">staff</span><span class="text-small">System Default Account</span></td>
-                    <td style="color: var(--text-muted);">staff123</td>
-                    <td style="text-align: center;"><span class="status status-on-time">Staff</span></td>
-                    <td style="text-align: center; width: 100px;"><span style="color:var(--text-muted); font-size: 11px;">Protected</span></td>
-                </tr>
-            `;
-
-            try {
-                const res = await fetch(`${API_URL}/staff`);
-                const staffUsers = await res.json();
-                staffUsers.forEach(user => {
-                    htmlStr += `
-                        <tr>
-                            <td><span class="text-bold">${user.username}</span><span class="text-small">${user.email}</span></td>
-                            <td style="color: var(--text-muted);">${user.password}</td>
-                            <td style="text-align: center;"><span class="status status-on-time">Staff</span></td>
-                            <td style="text-align: center; width: 100px;">
-                                <button class="action-btn" onclick="deleteStaff('${user.username}')" title="Delete Staff Account">🗑️</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                list.innerHTML = htmlStr;
-            } catch(e) {}
+        function openUploadModal(ticketId) {
+            document.getElementById('confirmTicketId').value = ticketId;
+            document.getElementById('uploadModal').style.display = 'flex';
         }
 
-        function deleteStaff(username) {
-            showSmartModal('confirm', 'Revoke Access', `Are you sure you want to revoke access for staff member <strong>'${username}'</strong>?`, async () => {
-                await fetch(`${API_URL}/staff/${username}`, { method: 'DELETE' });
-                loadStaffList();
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            document.getElementById('receiptFile').value = '';
+        }
+
+        function submitPaymentConfirmation() {
+            const fileInput = document.getElementById('receiptFile');
+            if(!fileInput.files[0]) { alert("Please select a file first."); return; }
+            
+            const file = fileInput.files[0];
+            if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+                showSmartModal('error', 'Invalid Receipt', 'Choose a PNG, JPEG or WebP image up to 2 MB.'); return;
+            }
+            const reader = new FileReader();
+            
+            reader.onloadend = async function() {
+                const base64String = reader.result; 
+                const ticketId = document.getElementById('confirmTicketId').value;
+                
+                try {
+                    await apiFetch(`${API_URL}/tickets/${ticketId}/upload`, {
+                        method: 'PATCH', 
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ receiptPath: base64String }) 
+                    });
+                    closeUploadModal();
+                    showSmartModal('success', 'Receipt Uploaded', 'Your receipt has been submitted successfully and will be reviewed by our staff shortly.');
+                    loadTickets(); 
+                } catch(e) { showSmartModal('error', 'Error', 'Upload failed.'); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function checkPendingReceipts() {
+            if(currentRole !== 'passenger') {
+                try {
+                    const res = await apiFetch(`${API_URL}/tickets`);
+                    const tks = await res.json();
+                    const pendingCount = tks.filter(t => t.status === 'Pending' && t.receiptPath && t.receiptPath.length > 50).length;
+                    
+                    if(pendingCount > 0) {
+                        setTimeout(() => {
+                            showSmartModal('success', 'Pending Approvals 🔔', `You have ${pendingCount} receipt(s) waiting for your approval!`);
+                        }, 800);
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function approvePayment(id) {
+            showSmartModal('confirm', 'Approve Payment', `Are you sure you want to confirm payment for ticket <strong>#${escapeHtml(id)}</strong>?`, async () => {
+                try {
+                    await apiFetch(`${API_URL}/tickets/${id}/confirm`, { method: 'PATCH' });
+                    loadTickets(); if (currentRole === 'admin') loadReports();
+                    showSmartModal('success', 'Payment Confirmed', 'The ticket is now Confirmed!');
+                } catch(e) {}
+            });
+        }
+
+        function rejectPayment(id) {
+            showSmartModal('confirm', 'Reject Payment', `Are you sure you want to reject payment for ticket <strong>#${escapeHtml(id)}</strong>?`, async () => {
+                await apiFetch(`${API_URL}/tickets/${id}/reject`, { method: 'PATCH' });
+                loadTickets();
+                showSmartModal('error', 'Rejected', 'The payment was rejected.');
             });
         }
 
         async function loadReports() {
             try {
-                const res = await fetch(`${API_URL}/reports`);
+                const res = await apiFetch(`${API_URL}/reports`);
                 const data = await res.json();
-                
                 document.getElementById('total-revenue').innerText = `${data.totalRevenue} SAR`;
 
                 const list = document.getElementById('occupancyList');
@@ -679,11 +1133,199 @@
 
                     htmlStr += `
                         <tr>
-                            <td><span class="text-bold">${t.trainName}</span><span class="text-small">ID: ${t.trainID}</span></td>
-                            <td style="text-align: center;"><span class="text-bold">${t.totalCapacity}</span></td>
-                            <td style="text-align: center;"><span class="text-bold">${t.bookedSeats}</span></td>
-                            <td style="text-align: center;">
-                                <span class="status" style="background: ${rateColor}20; color: ${rateColor};">${t.occupancyRate}%</span>
+                            <td><span class="text-bold">${escapeHtml(t.trainName)}</span><span class="text-small">ID: ${escapeHtml(t.trainID)}</span></td>
+                            <td style="text-align: center;"><span class="text-bold">${escapeHtml(t.totalCapacity)}</span></td>
+                            <td style="text-align: center;"><span class="text-bold">${escapeHtml(t.bookedSeats)}</span></td>
+                            <td style="text-align: center;"><span class="status" style="background: ${rateColor}20; color: ${rateColor};">${escapeHtml(t.occupancyRate)}%</span></td>
+                        </tr>
+                    `;
+                });
+                list.innerHTML = htmlStr;
+            } catch(e) {}
+        }
+
+        async function logout() {
+            try { await apiFetch(`${API_URL}/logout`, { method: 'POST' }); }
+            finally { sessionToken = null; location.reload(); }
+        }
+
+        function viewReceipt(ticketNum) {
+            const ticket = globalTicketsData.find(t => t.ticketNumber == ticketNum);
+            if (!ticket || !ticket.receiptPath || ticket.receiptPath.length < 50) {
+                showSmartModal('error', 'No Receipt', 'No valid receipt uploaded for this ticket.');
+                return;
+            }
+            document.getElementById('modalReceiptImg').src = ticket.receiptPath;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.getElementById('modalReceiptImg').src = '';
+        }
+
+        function printDocument(ticketNum, type) {
+            const ticket = globalTicketsData.find(t => t.ticketNumber == ticketNum);
+            if(!ticket) return;
+            if (type === 'boarding' && ticket.status !== 'Confirmed') { showSmartModal('error', 'Not Valid for Travel', 'Boarding passes are available only for confirmed tickets.'); return; }
+
+            const isPending = ticket.status === 'Pending';
+            const statusDisplay = ticket.status === 'Cancelled' ? 'CANCELLED' : isPending ? 'PAYMENT PENDING' : 'PAYMENT CONFIRMED';
+            const warningText = isPending ? '<div style="color: #dc2626; font-weight: bold; text-align: center; margin-top: 10px;">⚠️ This ticket is NOT VALID for travel until payment is confirmed at the station.</div>' : '';
+
+            const printWindow = window.open('', '', 'height=600,width=800');
+            const commonStyles = `
+                <style>
+                    body { font-family: 'Arial', sans-serif; color: #333; margin: 0; padding: 40px; background: #f9f9f9; }
+                    .print-box { background: #fff; padding: 30px; border-radius: 10px; border: 1px solid #ddd; max-width: 600px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #eee; padding-bottom: 20px; }
+                    .header h1 { margin: 0; color: #2563eb; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;}
+                    .header p { margin: 5px 0 0; color: #777; font-size: 14px;}
+                    .row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #f1f1f1; padding-bottom: 10px; }
+                    .label { font-weight: bold; color: #555; }
+                    .value { font-weight: 600; color: #111; }
+                    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #999; }
+                    .total { font-size: 20px; color: ${isPending ? '#d97706' : '#16a34a'}; font-weight: 800; }
+                </style>
+            `;
+
+            let content = '';
+
+            if(type === 'receipt') {
+                content = `
+                    <html><head><title>Payment Receipt - #${escapeHtml(ticket.ticketNumber)}</title>${commonStyles}</head><body>
+                        <div class="print-box">
+                            <div class="header">
+                                <h1>💳 PAYMENT RECEIPT</h1>
+                                <p>Train Booking System</p>
+                            </div>
+                            <div class="row"><span class="label">Receipt No:</span><span class="value">REC-${escapeHtml(ticket.ticketNumber)}-${Date.now().toString().slice(-4)}</span></div>
+                            <div class="row"><span class="label">Date:</span><span class="value">${new Date().toLocaleString()}</span></div>
+                            <div class="row"><span class="label">Passenger Name:</span><span class="value">${escapeHtml(ticket.passengerName)}</span></div>
+                            <div class="row"><span class="label">Route ID:</span><span class="value">${escapeHtml(ticket.trainID)} (${escapeHtml(ticket.trainName)})</span></div>
+                            <div class="row"><span class="label">Payment Method:</span><span class="value">${escapeHtml(ticket.paymentMethod)}</span></div>
+                            <div class="row"><span class="label">Status:</span><span class="value" style="color: ${isPending ? '#d97706' : '#16a34a'}">${statusDisplay}</span></div>
+                            <div class="row" style="border:none; margin-top: 20px;"><span class="label" style="font-size: 20px;">Total Amount:</span><span class="value total">${escapeHtml(ticket.price)} SAR</span></div>
+                            ${warningText}
+                            <div class="footer">Thank you for your business. Retain this receipt for your records.</div>
+                        </div>
+                    </body></html>
+                `;
+            } else { 
+                content = `
+                    <html><head><title>Boarding Pass - #${escapeHtml(ticket.ticketNumber)}</title>${commonStyles}
+                    <style>
+                        .print-box { border-left: 8px solid ${isPending ? '#d97706' : '#2563eb'}; }
+                        .stations { display: flex; justify-content: space-between; align-items: center; margin: 25px 0; font-size: 24px; font-weight: bold; }
+                        .arrow { color: #2563eb; font-size: 30px; }
+                        .barcode { text-align: center; margin-top: 30px; letter-spacing: 8px; font-family: 'Courier New', monospace; font-size: 20px; font-weight: bold;}
+                    </style>
+                    </head><body>
+                        <div class="print-box">
+                            <div class="header">
+                                <h1>🎟️ BOARDING PASS</h1>
+                                <p>Have a safe trip!</p>
+                            </div>
+                            <div class="row"><span class="label">PNR / Ticket #:</span><span class="value" style="font-size: 18px; color: #2563eb;">${escapeHtml(ticket.ticketNumber)}</span></div>
+                            <div class="row"><span class="label">Passenger:</span><span class="value">${escapeHtml(ticket.passengerName)}</span></div>
+                            
+                            <div class="stations">
+                                <div>${escapeHtml(ticket.departureStation)}</div>
+                                <div class="arrow">➔</div>
+                                <div>${escapeHtml(ticket.arrivalStation)}</div>
+                            </div>
+                            
+                            <div class="row"><span class="label">Train / Route:</span><span class="value">${escapeHtml(ticket.trainName)} (${escapeHtml(ticket.trainID)})</span></div>
+                            <div class="row"><span class="label">Date & Time:</span><span class="value">${escapeHtml(ticket.departureDate)} at 10:00 AM</span></div>
+                            
+                            ${warningText}
+                            <div class="barcode">||| |||| | ||||| || |</div>
+                            <div class="footer">Please arrive at the station 30 minutes before departure.</div>
+                        </div>
+                    </body></html>
+                `;
+            }
+
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+        }
+
+        function printSystemReport() {
+            const printWindow = window.open('', '', 'height=700,width=900');
+            const totalRev = document.getElementById('total-revenue').innerText;
+            const tableHTML = document.getElementById('reportTable').outerHTML;
+            
+            const content = `
+                <html><head><title>System Report</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; padding: 40px; color: #333;}
+                    h1 { color: #111827; text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;}
+                    h2 { color: #3b82f6; margin-top: 30px;}
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+                    th { background-color: #f8fafc; color: #333; }
+                    .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #777; }
+                </style>
+                </head><body>
+                    <h1>📊 Executive System Report</h1>
+                    <p style="text-align: center; color: #555;">Generated on: ${new Date().toLocaleString()}</p>
+                    
+                    <h2>Financial Summary</h2>
+                    <div style="font-size: 24px; font-weight: bold; background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 5px solid #16a34a;">
+                        Total Generated Revenue: <span style="color: #16a34a;">${totalRev}</span>
+                    </div>
+
+                    <h2>Occupancy Analytics</h2>
+                    ${tableHTML}
+                    
+                    <div class="footer">Confidential & Proprietary - Train Booking Portal</div>
+                </body></html>
+            `;
+            
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+        }
+
+        async function createNewStaffAccount() {
+            const user = document.getElementById('new-staff-user').value.toLowerCase().trim();
+            const email = document.getElementById('new-staff-email').value.toLowerCase().trim();
+            if(!user || !email) { showSmartModal('error', 'Fields Required', 'Please fill all fields.'); return; }
+            
+            const res = await apiFetch(`${API_URL}/staff`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, email: email })
+            });
+            
+            if(res.ok) {
+                const created = await res.json();
+                showSmartModal('success', 'Staff Created', `Account created. Temporary password: <strong>${escapeHtml(created.temporaryPassword)}</strong>. Share it privately with the staff member.`);
+                document.getElementById('new-staff-user').value = '';
+                document.getElementById('new-staff-email').value = '';
+                loadStaffList();
+            } else { 
+                const errData = await res.json();
+                showSmartModal('error', 'Failed', escapeHtml(errData.message || 'An error occurred.'));
+            }
+        }
+
+        async function loadStaffList() {
+            const list = document.getElementById('staffList');
+            let htmlStr = '';
+            try {
+                const res = await apiFetch(`${API_URL}/staff`);
+                const staffUsers = await res.json();
+                staffUsers.forEach(user => {
+                    htmlStr += `
+                        <tr>
+                            <td><span class="text-bold">${escapeHtml(user.username)}</span><span class="text-small">${escapeHtml(user.email)}</span></td>
+                            <td style="text-align: center;"><span class="status status-on-time">${escapeHtml(user.role)}</span></td>
+                            <td style="text-align: center; width: 100px;">
+                                ${user.role === 'Staff' ? `<button class="action-btn" onclick="deleteStaff(${inlineArg(user.username)})">🗑️</button>` : 'Protected'}
                             </td>
                         </tr>
                     `;
@@ -692,7 +1334,55 @@
             } catch(e) {}
         }
 
-        function logout() { location.reload(); }
+        function deleteStaff(username) {
+            showSmartModal('confirm', 'Revoke Access', `Are you sure you want to revoke access for staff member <strong>'${escapeHtml(username)}'</strong>?`, async () => {
+                await apiFetch(`${API_URL}/staff/${username}`, { method: 'DELETE' });
+                loadStaffList();
+            });
+        }
+
+        async function loadAdminPassengers() {
+            const res = await apiFetch(`${API_URL}/admin/passengers`);
+            const passengers = await res.json();
+            const list = document.getElementById('adminPassengerList');
+            list.innerHTML = '';
+            
+            passengers.forEach(p => {
+                list.innerHTML += `
+                    <tr>
+                        <td><span class="text-bold">${escapeHtml(p.name)}</span></td>
+                        <td><span class="text-bold">${escapeHtml(p.username)}</span></td>
+                        <td>${escapeHtml(p.email)}</td>
+                        <td><span class="text-bold">${escapeHtml(p.passengerID)}</span></td>
+                        <td>${escapeHtml(p.contactNumber)}</td>
+                        <td style="text-align: center;">
+                            <button class="action-btn" onclick="deletePassenger(${inlineArg(p.passengerID)})" title="Delete Passenger">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function deletePassenger(id) {
+            showSmartModal('confirm', 'Delete Passenger', `Are you sure you want to delete passenger <strong>#${escapeHtml(id)}</strong>? This action cannot be undone.`, async () => {
+                try {
+                    await apiFetch(`${API_URL}/admin/passengers/${id}`, { method: 'DELETE' });
+                    showSmartModal('success', 'Deleted', 'Passenger login removed. Historical bookings are retained.');
+                    loadAdminPassengers();
+                } catch(e) {
+                    showSmartModal('error', 'Error', 'Failed to delete.');
+                }
+            });
+        } 
     </script>
+
+    <div class="modal-overlay" id="imageModal" onclick="closeImageModal()">
+        <div class="modal-content" style="width: 80%; max-width: 600px; padding: 10px;" onclick="event.stopPropagation()">
+            <img id="modalReceiptImg" src="" style="width: 100%; border-radius: 8px;">
+            <p style="color:var(--text-muted); margin-top:10px; text-align:center;">Receipt View</p>
+            <button onclick="closeImageModal()" class="primary-btn" style="margin-top:10px;">Close</button>
+        </div>
+    </div>
+
 </body>
 </html>
