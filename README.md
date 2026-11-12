@@ -9,7 +9,6 @@ This repository contains the source code for Phase 3 of our website project.
 - Yazed Al-Harbi 
 - Khaled Al-Jweser 
 - Faisal haddadi 
-- Ebrahim Aljohani
 
 ## Why We Used GitHub
 GitHub was used to store and organize the project files, track project updates, document team contributions, and make the project easy to share with the instructor.
