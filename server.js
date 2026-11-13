@@ -4,6 +4,9 @@ const { randomBytes, randomInt, createHash, timingSafeEqual } = require('node:cr
 const { createClient } = require('@supabase/supabase-js');
 const { createTrainScheduleService } = require('./train-schedules');
 
+const { hashPassword, verifyPassword, validPassword } = require('./password-security');
+
+
 const supabaseUrl = process.env.SUPABASE_URL || 'https://gmjpifzyghtosnktcebn.supabase.co';
 const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_RvYf7D1dSsi4R8YLowcjqA_Q7EpGo8O';
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
@@ -119,7 +122,35 @@ function createApp({ supabaseClient, databaseClient, scheduleService } = {}) {
         const supplied = typeof req.body.password === 'string' ? req.body.password : '';
         const table = req.body.portal === 'passenger' ? 'passenger_users' : 'staff_users';
         const account = check(await db.from(table).select('*').eq('username', username).maybeSingle());
-        if (!account || !equalPassword(supplied, account.password)) throw fail('Invalid username or password.', 401);
+       
+    let passwordMatches = false;
+
+        if (account) {
+            const storedPassword = account.password;
+
+            if (
+                table === 'passenger_users' &&
+                typeof storedPassword === 'string' &&
+                storedPassword.startsWith('scrypt$')
+            ) {
+                 // Verify passwords protected with scrypt
+                   passwordMatches = await verifyPassword(
+                        supplied,
+                        storedPassword
+                    );
+                } else {
+                    // Temporary support for existing accounts
+                    passwordMatches = equalPassword(
+                        supplied,
+                        storedPassword
+                );
+          }            
+     }
+
+         if (!passwordMatches) {
+            throw fail('Invalid username or password.', 401);
+        }
+
         const role = table === 'passenger_users' ? 'passenger' : account.role.toLowerCase();
         const token = randomBytes(32).toString('hex');
         sessions.set(token, { table, id: account.id, expires: Date.now() + ttl });
@@ -130,7 +161,9 @@ function createApp({ supabaseClient, databaseClient, scheduleService } = {}) {
         const passengerID = text(req.body.passengerID, 'passenger ID', 20);
         if (!/^[a-zA-Z0-9_-]+$/.test(passengerID)) throw fail('Invalid passenger ID.');
         check(await db.rpc('app_register_passenger', {
-            p_username: username, p_email: email, p_password: password(req.body.password),
+            p_username: username, p_email: email, 
+p_password: await hashPassword(password(req.body.password)),
+
             p_passenger_id: passengerID, p_name: text(req.body.name, 'name'),
             p_contact: text(req.body.contactNumber, 'contact number', 20)
         }));
